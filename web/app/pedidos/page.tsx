@@ -29,7 +29,10 @@ export default function PedidosPage() {
 
   return (
     <div>
-      <h1>Pedidos ({total})</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Pedidos ({total})</h1>
+        <Link href="/pedidos/nuevo"><button>+ Nuevo pedido</button></Link>
+      </div>
       {error && <p className="error">{error}</p>}
       <table>
         <thead>
