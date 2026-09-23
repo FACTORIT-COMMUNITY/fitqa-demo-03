@@ -109,6 +109,11 @@ otro vendedor es 403 para ese rol (`admin` y `operador` no tienen esa restricci�
 **Reembolsar.** Solo un pedido `confirmado` con un pago `confirmado` se puede reembolsar;
 anula el pago y marca el pedido como `reembolsado`.
 
+**Solo se venden productos publicados.** Un producto con `publicado: false` no se puede
+agregar como item de un pedido (ni al crearlo ni con `POST /pedidos/{id}/items`); intentarlo
+es 409. Un producto sin publicar es un borrador de catálogo, no algo que un vendedor
+pueda ofrecer todavía.
+
 **Filtro `estado` en `GET /pedidos`.** Acepta únicamente `borrador`, `confirmado`,
 `cancelado` o `reembolsado`; cualquier otro valor es 400, nunca una lista vacía
 silenciosa.
@@ -150,6 +155,20 @@ Un usuario nuevo arranca con la contraseña de siembra (ver `/admin/seed-info`);
 `POST /usuarios/{id}/resetear-password` la vuelve a esa misma contraseña. Cambiar el rol
 de un usuario (`/usuarios/{id}/cambiar-rol`) surte efecto en su próximo access token — el
 que ya tiene emitido conserva el rol con el que se emitió hasta que expire o se refresque.
+
+**El email es único sin distinguir mayúsculas de minúsculas.** `ana@x.com` y
+`ANA@X.com` son el mismo email a efectos de unicidad; crear un segundo usuario que solo
+difiere en capitalización es 409, igual que si fuera idéntico.
+
+## Auditoría y notificaciones
+
+Toda acción administrativa sensible —cambiar el rol de un usuario, resetear su
+contraseña, confirmar o anular un pago, moderar una reseña— queda registrada en
+`/auditoria` con quién la hizo, sobre qué recurso y cuándo (`GET /auditoria`,
+`GET /auditoria/recurso/{recurso}/{recurso_id}`).
+
+Confirmar un pago genera además una notificación (`/notificaciones`) para el vendedor
+dueño del pedido, avisándole que ya puede proceder con el envío.
 
 ## Notas de diseño (decisiones que parecen errores y no lo son)
 
