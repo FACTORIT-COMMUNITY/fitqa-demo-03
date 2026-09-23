@@ -1,0 +1,5 @@
+{
+  "endpoints": 94,
+  "rutas": 7,
+  "nota": "medir.py cuenta 61 endpoints via patron generico (chi no esta en FRAMEWORKS a proposito). Su dedup por (verbo,ruta) POR ARCHIVO colapsa las rutas relativas anidadas de chi (r.Route/r.Group, ej. \"/\" y \"/{id}\" repetidos en cada bloque de recurso) porque toda la tabla de rutas vive en cmd/api/main.go. Conteo real verificado a mano sobre ese archivo: 94 llamadas r.Get/r.Post/r.Put/r.Delete (grep -oE 'r\\.(Get|Post|Put|Delete|Patch)\\(' cmd/api/main.go | wc -l). Las 7 rutas son las paginas del panel Next (App Router), que si se detectan bien."
+}
