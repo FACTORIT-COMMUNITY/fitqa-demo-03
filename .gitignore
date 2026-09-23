@@ -1,0 +1,13 @@
+# Go
+/bin/
+*.exe
+*.test
+
+# Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/.env*.local
+
+# Editor / OS
+.DS_Store
