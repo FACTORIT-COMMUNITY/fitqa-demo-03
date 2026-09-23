@@ -310,14 +310,12 @@ func (h *ProductosHandler) AjustarStock(w http.ResponseWriter, r *http.Request) 
 	}
 	var actual int
 	err = h.db.QueryRow(`SELECT cantidad FROM stock_bodega WHERE producto_id = ? AND bodega_id = ?`, id, body.BodegaID).Scan(&actual)
-	if errors.Is(err, sql.ErrNoRows) {
-		httpx.BadRequest(w, "el producto no tiene stock registrado en esa bodega")
-		return
-	}
-	if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		httpx.InternalError(w, err)
 		return
 	}
+	// sql.ErrNoRows: el producto todavia no tiene fila de stock en esa bodega (recien
+	// creado, o nunca se movio ahi). Se inicializa en 0 en vez de rechazar el ajuste.
 	nuevo := actual + body.Delta
 	if nuevo < 0 {
 		httpx.Conflict(w, "el ajuste dejaria el stock en negativo")
@@ -329,7 +327,16 @@ func (h *ProductosHandler) AjustarStock(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	defer tx.Rollback()
-	if _, err := tx.Exec(`UPDATE stock_bodega SET cantidad = ? WHERE producto_id = ? AND bodega_id = ?`, nuevo, id, body.BodegaID); err != nil {
+	_, err = tx.Exec(
+		`INSERT INTO stock_bodega(producto_id, bodega_id, cantidad) VALUES (?, ?, ?)
+		 ON CONFLICT(producto_id, bodega_id) DO UPDATE SET cantidad = excluded.cantidad`,
+		id, body.BodegaID, nuevo,
+	)
+	if esViolacionFK(err) {
+		httpx.BadRequest(w, "bodega_id no existe")
+		return
+	}
+	if err != nil {
 		httpx.InternalError(w, err)
 		return
 	}
